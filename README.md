@@ -15,6 +15,12 @@
 
 <br>
 
+### [![Download](https://img.shields.io/badge/⬇️_СКАЧАТЬ_HikariCore-2ea043?style=for-the-badge&logoColor=white)](https://github.com/alalal68-wq/HikariCore/releases/latest)
+
+<sub>Скачивает последнюю версию из <a href="https://github.com/alalal68-wq/HikariCore/releases/latest">релизов</a></sub>
+
+<br>
+
 ![Python](https://img.shields.io/badge/Python-3.10+-3776ab?style=flat-square&logo=python&logoColor=white)
 ![PyQt6](https://img.shields.io/badge/PyQt6-WebEngine-41cd52?style=flat-square&logo=qt&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Windows-0078d6?style=flat-square&logo=windows&logoColor=white)
@@ -99,9 +105,10 @@
 
 ### Вариант 1 — готовый exe (проще всего)
 
-1. Скачай **`HikariCore.exe`** из раздела [Releases](../../releases).
-2. Запусти **от имени администратора** (правый клик → «Запуск от имени администратора»).
-3. Готово.
+1. **[⬇️ Скачай последнюю версию HikariCore](https://github.com/alalal68-wq/HikariCore/releases/latest)** из раздела Releases.
+2. Распакуй архив `HikariCore.zip`.
+3. Запусти **`HikariCore.exe`** от имени администратора (правый клик → «Запуск от имени администратора»).
+4. Готово.
 
 ### Вариант 2 — из исходников
 
@@ -197,6 +204,10 @@ HikariCore/
 ---
 
 <div align="center">
+
+### [![Download](https://img.shields.io/badge/⬇️_СКАЧАТЬ_HikariCore-2ea043?style=for-the-badge&logoColor=white)](https://github.com/alalal68-wq/HikariCore/releases/latest)
+
+<br>
 
 **Сделано с ✨ для геймеров, которым лень фармить вручную**
 
