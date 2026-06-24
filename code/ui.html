@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>HikariCore UI</title>
+<style>
+  :root{
+    --card-2:    rgba(23,27,36,.80);
+    --card-3:    rgba(30,35,48,.88);
+    --line:      rgba(120,130,160,.22);
+    --line-2:    rgba(140,150,185,.32);
+    --text:      #eef1f7;
+    --muted:     #9aa2b5;
+    --amber:     #f5b452;
+    --green:     #4ade80;
+    --red:       #f4647a;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; user-select:none; }
+  html,body{ background:transparent; overflow:hidden; }
+  body{
+    font-family:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;
+    color:var(--text); font-size:14px; -webkit-font-smoothing:antialiased;
+  }
+  svg{ display:block; }
+
+  /* ===== широкая прямоугольная карточка ===== */
+  .app{
+    position:relative; width:700px; height:392px; margin:9px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    box-shadow:0 22px 60px rgba(0,0,0,.65);
+    overflow:hidden;
+    background:url('bg.png') center/cover no-repeat;
+  }
+  .app::before{
+    content:''; position:absolute; inset:0; z-index:0;
+    background:linear-gradient(180deg,
+      rgba(9,11,16,.84) 0%, rgba(9,11,16,.88) 50%, rgba(7,9,13,.93) 100%);
+  }
+  .app::after{
+    content:''; position:absolute; top:0; left:20%; right:20%; height:1px; z-index:3;
+    background:linear-gradient(90deg,transparent,rgba(245,180,82,.7),transparent);
+  }
+  #particles{ position:absolute; inset:0; z-index:1; pointer-events:none; }
+  .content{ position:relative; z-index:2; display:flex; flex-direction:column; height:100%; }
+
+  /* ================= ШАПКА ================= */
+  .titlebar{
+    display:flex; align-items:center; gap:11px;
+    padding:13px 14px 13px 18px; cursor:grab;
+    border-bottom:1px solid var(--line);
+  }
+  .logo-badge{
+    width:36px; height:36px; border-radius:9px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;                                      /* обрезаем картинку по скруглению */
+    background:linear-gradient(145deg,#1c2230,#0c0f15);
+    border:1px solid var(--line-2);
+    box-shadow:0 4px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .logo-img{
+    width:100%; height:100%; object-fit:cover; object-position:center top;
+    display:block; border-radius:8px;
+  }
+  .logo-text{ line-height:1.15; }
+  .logo-text b{ font-size:16px; font-weight:800; letter-spacing:.3px; }
+  .logo-text small{ display:block; font-size:10px; color:var(--muted); font-weight:600; letter-spacing:.6px; }
+
+  .status{
+    margin-left:auto; display:flex; align-items:center; gap:7px;
+    font-size:11px; font-weight:700; letter-spacing:.3px;
+    padding:6px 12px; border-radius:6px;
+    background:var(--card-2); color:var(--muted);
+    border:1px solid var(--line); transition:.25s;
+  }
+  .status .dot{ width:7px; height:7px; border-radius:50%; background:var(--muted); transition:.25s; }
+  .status.on{ color:var(--green); border-color:rgba(74,222,128,.45); background:rgba(74,222,128,.12);
+              box-shadow:0 0 16px rgba(74,222,128,.2); }
+  .status.on .dot{ background:var(--green); animation:pulse 1.2s infinite; }
+  @keyframes pulse{ 50%{ box-shadow:0 0 0 4px rgba(74,222,128,.18); } }
+
+  .close{
+    width:28px; height:28px; margin-left:6px; border-radius:6px; border:none;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent; color:var(--muted); cursor:pointer; transition:.15s;
+  }
+  .close:hover{ background:rgba(244,100,122,.16); color:var(--red); }
+
+  /* ================= ТЕЛО: 2 колонки ================= */
+  .body{ flex:1; display:flex; gap:18px; padding:18px 22px; }
+
+  /* --- левая колонка: кейкап --- */
+  .left{ flex:none; width:230px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ringwrap{ position:relative; width:158px; height:158px; }
+  .ringwrap > svg{ position:absolute; inset:0; transform:rotate(-90deg); }
+  .ring-bg{ fill:none; stroke:rgba(120,130,160,.28); stroke-width:5; }
+  .ring-fg{ fill:none; stroke:var(--amber); stroke-width:5; stroke-linecap:round;
+            filter:drop-shadow(0 0 7px rgba(245,180,82,.6)); }
+  .keycap{
+    position:absolute; inset:26px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:16px; cursor:pointer;
+    font-size:42px; font-weight:800; letter-spacing:1px; color:var(--text);
+    background:linear-gradient(180deg,rgba(40,47,64,.96),rgba(24,29,42,.96) 55%,rgba(15,19,28,.96));
+    border:1px solid var(--line-2);
+    box-shadow:0 7px 0 rgba(5,7,11,.9), 0 12px 26px rgba(0,0,0,.55), inset 0 1.5px 0 rgba(255,255,255,.09);
+    transition:transform .08s, box-shadow .08s, color .2s;
+  }
+  .keycap:active, .keycap.pressed{
+    transform:translateY(5px);
+    box-shadow:0 2px 0 rgba(5,7,11,.9), 0 6px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .keycap.pressed{ color:var(--amber); text-shadow:0 0 18px rgba(245,180,82,.5); }
+  .keycap.listen{ color:var(--amber); animation:blink 1s infinite; font-size:14px; font-weight:600; }
+  @keyframes blink{ 50%{ opacity:.45; } }
+  .keyhint{ margin-top:13px; font-size:10.5px; color:var(--muted); display:flex; align-items:center; gap:6px;
+            text-shadow:0 1px 4px rgba(0,0,0,.6); }
+  .counter{
+    margin-top:10px; display:flex; align-items:center; gap:7px;
+    font-size:12px; font-weight:700; color:var(--green);
+    padding:6px 14px; border-radius:6px;
+    background:rgba(20,40,28,.6); border:1px solid rgba(74,222,128,.28);
+  }
+
+  /* --- правая колонка: настройки --- */
+  .right{ flex:1; display:flex; flex-direction:column; gap:14px; justify-content:center; }
+  .label{
+    display:flex; align-items:center; gap:7px;
+    font-size:10px; font-weight:800; letter-spacing:1.6px;
+    text-transform:uppercase; color:var(--muted); margin-bottom:8px;
+    text-shadow:0 1px 4px rgba(0,0,0,.6);
+  }
+  .label svg{ opacity:.75; }
+  .row{ display:flex; gap:10px; }
+
+  .stepper{ flex:1; display:flex; align-items:center; padding:4px;
+            background:var(--card-2); border:1px solid var(--line); border-radius:8px; transition:.15s; }
+  .stepper:hover{ border-color:var(--line-2); }
+  .stepper button{ width:34px; height:38px; border:none; border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent; color:var(--muted); cursor:pointer; transition:.15s; }
+  .stepper button:hover{ color:var(--amber); background:var(--card-3); }
+  .stepper .val{ flex:1; text-align:center; font-weight:800; font-size:17px; font-variant-numeric:tabular-nums; }
+  .stepper .unit{ font-size:9.5px; color:var(--muted); display:block; font-weight:600; letter-spacing:.4px; margin-top:1px; }
+
+  .bind{ flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px 8px; border-radius:8px; cursor:pointer;
+    background:var(--card-2); border:1px solid var(--line);
+    color:var(--muted); font-size:12px; font-weight:700; transition:.15s; }
+  .bind kbd{ font-family:inherit; font-size:11.5px; font-weight:800; color:var(--amber);
+    background:var(--card-3); border:1px solid var(--line-2); border-bottom-width:2.5px;
+    border-radius:5px; padding:3px 9px; }
+  .bind:hover{ border-color:var(--line-2); color:var(--text); }
+  .bind.listen{ border-color:var(--amber); background:rgba(245,180,82,.15); color:var(--amber); animation:blink 1s infinite; }
+
+  /* ================= КНОПКИ ================= */
+  .actions{ display:flex; gap:12px; margin-top:4px; }
+  .btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:9px;
+    padding:13px 0; border:none; border-radius:9px;
+    font-family:inherit; font-size:14px; font-weight:800; letter-spacing:.2px; cursor:pointer; transition:.15s; }
+  .btn:active{ transform:scale(.97); }
+  .btn-start{ color:#15171c; background:linear-gradient(180deg,#ffffff,#dfe3ec);   /* белая */
+    box-shadow:0 5px 18px rgba(255,255,255,.18), inset 0 1px 0 rgba(255,255,255,.9); }
+  .btn-start:hover{ filter:brightness(1.04); box-shadow:0 6px 24px rgba(255,255,255,.28); }
+  .btn-stop{ color:#fff; background:linear-gradient(180deg,#f4647a,#d23b54);      /* красная */
+    box-shadow:0 5px 18px rgba(220,60,90,.4), inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn-stop:hover{ filter:brightness(1.06); box-shadow:0 6px 24px rgba(220,60,90,.5); }
+
+  /* ================= ПЕРЕКЛЮЧАТЕЛЬ УВЕДОМЛЕНИЙ ================= */
+  .toggle-row{ display:flex; align-items:center; gap:11px;
+    padding:9px 13px; border-radius:8px; cursor:pointer;
+    background:var(--card-2); border:1px solid var(--line); transition:.15s; }
+  .toggle-row:hover{ border-color:var(--line-2); }
+  .toggle-row .tr-icon{ display:flex; color:var(--muted); transition:.2s; }
+  .toggle-row .tr-text{ display:flex; flex-direction:column; line-height:1.25; }
+  .toggle-row .tr-text b{ font-size:12.5px; font-weight:700; letter-spacing:.2px; }
+  .toggle-row .tr-text small{ font-size:9.5px; color:var(--muted); font-weight:600; letter-spacing:.3px; }
+  .switch{ margin-left:auto; position:relative; width:42px; height:23px; flex:none; }
+  .switch .track{ position:absolute; inset:0; border-radius:999px;
+    background:var(--card-3); border:1px solid var(--line-2); transition:.2s; }
+  .switch .thumb{ position:absolute; top:3px; left:3px; width:15px; height:15px; border-radius:50%;
+    background:var(--muted); transition:.2s cubic-bezier(.4,1.4,.5,1); box-shadow:0 1px 3px rgba(0,0,0,.55); }
+  .toggle-row.on .tr-icon{ color:var(--amber); }
+  .switch.on .track{ background:rgba(245,180,82,.22); border-color:rgba(245,180,82,.6); }
+  .switch.on .thumb{ left:21px; background:var(--amber); box-shadow:0 0 9px rgba(245,180,82,.7); }
+</style>
+</head>
+<body>
+<div class="app">
+  <canvas id="particles"></canvas>
+
+  <div class="content">
+
+    <!-- ШАПКА -->
+    <div class="titlebar" id="drag">
+      <div class="logo-badge">
+        <img class="logo-img" src="../logo.png" alt="HikariCore">
+      </div>
+      <div class="logo-text"><b>HikariCore</b><small>СБОРЩИК РЕСУРСОВ</small></div>
+      <div class="status" id="status"><span class="dot"></span><span id="statusText">Остановлено</span></div>
+      <button class="close" id="btnClose" title="Закрыть">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- ТЕЛО -->
+    <div class="body">
+
+      <!-- ЛЕВО: кейкап -->
+      <div class="left">
+        <div class="ringwrap">
+          <svg viewBox="0 0 158 158">
+            <circle class="ring-bg" cx="79" cy="79" r="74"/>
+            <circle class="ring-fg" id="ring" cx="79" cy="79" r="74"
+                    stroke-dasharray="464.9" stroke-dashoffset="464.9"/>
+          </svg>
+          <div class="keycap" id="keycap">E</div>
+        </div>
+        <div class="keyhint">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 9a3 3 0 1 1 6 0c0 2-3 3-3 3"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/>
+          </svg>
+          нажми на клавишу, чтобы сменить её
+        </div>
+        <div class="counter" id="counter">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/>
+            <path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/>
+          </svg>
+          <span id="counterVal">собрано: 0</span>
+        </div>
+      </div>
+
+      <!-- ПРАВО: настройки -->
+      <div class="right">
+        <div>
+          <div class="label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>
+            </svg>
+            Таймеры
+          </div>
+          <div class="row">
+            <div class="stepper">
+              <button onclick="step('hold',-0.5)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+              <div class="val"><span id="holdVal">3.0</span><span class="unit">ЗАЖАТИЕ, СЕК</span></div>
+              <button onclick="step('hold',0.5)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+            </div>
+            <div class="stepper">
+              <button onclick="step('pause',-0.5)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+              <div class="val"><span id="pauseVal">0.5</span><span class="unit">ПАУЗА, СЕК</span></div>
+              <button onclick="step('pause',0.5)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M7 16h10"/>
+            </svg>
+            Горячие клавиши
+          </div>
+          <div class="row">
+            <div class="bind" id="bindStart"><span>Старт</span><kbd id="kbdStart">F6</kbd></div>
+            <div class="bind" id="bindStop"><span>Стоп</span><kbd id="kbdStop">F7</kbd></div>
+          </div>
+        </div>
+
+        <div class="toggle-row on" id="notifyToggle" title="Показывать оверлей при сборе ресурса">
+          <span class="tr-icon" id="notifyIcon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
+            </svg>
+          </span>
+          <span class="tr-text">
+            <b>Уведомление о сборе</b>
+            <small>оверлей при сборе ресурса</small>
+          </span>
+          <span class="switch on" id="notifySwitch"><span class="track"></span><span class="thumb"></span></span>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-start" id="btnStart">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+            Старт
+          </button>
+          <button class="btn btn-stop" id="btnStop">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect width="13" height="13" x="5.5" y="5.5" rx="2.5"/></svg>
+            Стоп
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /body -->
+  </div><!-- /content -->
+</div>
+
+<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+<script>
+  let bridge = null;
+  let hold = 3.0, pause = 0.5, collected = 0;
+  let running = false, cycleStart = 0, raf = null;
+  let notify = true;
+  const CIRC = 464.9;
+  const $ = id => document.getElementById(id);
+
+  const BELL_ON  = '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>';
+  const BELL_OFF = '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M17 17H4a1 1 0 0 1-.74-1.673C4.59 13.956 6 12.499 6 8a6 6 0 0 1 .258-1.742"/><path d="m2 2 20 20"/><path d="M8.668 3.01A6 6 0 0 1 18 8c0 2.687.77 4.653 1.707 6.05"/>';
+
+  /* ================= ЧАСТИЦЫ (больше, хаотичные, белые) ================= */
+  (function(){
+    const canvas = $('particles');
+    const ctx = canvas.getContext('2d');
+    let W, H, parts = [];
+    const COUNT = 55;                       // больше частиц
+
+    function resize(){ W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; }
+    function make(){
+      const ang = Math.random() * Math.PI * 2;      // случайное направление
+      const spd = 0.08 + Math.random() * 0.4;       // случайная скорость
+      return {
+        x: Math.random()*W, y: Math.random()*H,
+        r: 0.5 + Math.random()*1.8,
+        vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd,
+        ph: Math.random()*Math.PI*2,
+        sp: 0.005 + Math.random()*0.012,
+        turn: (Math.random()-.5)*0.02                // лёгкое случайное искривление пути
+      };
+    }
+    function init(){ resize(); parts = Array.from({length:COUNT}, make); }
+    function tick(){
+      ctx.clearRect(0,0,W,H);
+      for (const p of parts){
+        // случайное блуждание: слегка поворачиваем вектор скорости
+        const a = Math.atan2(p.vy, p.vx) + p.turn + (Math.random()-.5)*0.04;
+        const s = Math.hypot(p.vx, p.vy);
+        p.vx = Math.cos(a)*s; p.vy = Math.sin(a)*s;
+        p.x += p.vx; p.y += p.vy; p.ph += p.sp;
+        if (p.x < -4) p.x = W+4; if (p.x > W+4) p.x = -4;
+        if (p.y < -4) p.y = H+4; if (p.y > H+4) p.y = -4;
+        const al = 0.12 + 0.38*(0.5+0.5*Math.sin(p.ph));
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,'+al.toFixed(3)+')';
+        ctx.shadowColor = 'rgba(255,255,255,.6)'; ctx.shadowBlur = 4;
+        ctx.fill(); ctx.shadowBlur = 0;
+      }
+      requestAnimationFrame(tick);
+    }
+    window.addEventListener('resize', init);
+    init(); tick();
+  })();
+
+  /* ================= МОСТ ================= */
+  new QWebChannel(qt.webChannelTransport, ch => {
+    bridge = ch.objects.bridge;
+    bridge.stateChanged.connect(on => {
+      running = on;
+      $('statusText').textContent = on ? 'Работает' : 'Остановлено';
+      $('status').classList.toggle('on', on);
+      if (on){ cycleStart = performance.now(); animate(); }
+      else { cancelAnimationFrame(raf); resetRing(); $('keycap').classList.remove('pressed'); }
+    });
+    bridge.cycleDone.connect(() => {
+      collected++; $('counterVal').textContent = 'собрано: '+collected;
+      cycleStart = performance.now() + pause*1000;
+    });
+    bridge.bindCaptured.connect((what, key) => {
+      const k = key.toUpperCase();
+      if (what === 'key'){
+        $('keycap').classList.remove('listen');
+        $('keycap').textContent = k.length>3 ? k.slice(0,4) : k;
+        $('keycap').style.fontSize = k.length>2 ? '20px' : '42px';
+      } else if (what === 'start'){
+        $('bindStart').classList.remove('listen');
+        $('bindStart').innerHTML = '<span>Старт</span><kbd>'+k+'</kbd>';
+      } else {
+        $('bindStop').classList.remove('listen');
+        $('bindStop').innerHTML = '<span>Стоп</span><kbd>'+k+'</kbd>';
+      }
+    });
+  });
+
+  function animate(){
+    if (!running) return;
+    const t = (performance.now()-cycleStart)/(hold*1000);
+    const ring = $('ring');
+    if (t>=0 && t<=1){ ring.style.strokeDashoffset = CIRC*(1-t); $('keycap').classList.add('pressed'); }
+    else { ring.style.strokeDashoffset = CIRC; $('keycap').classList.remove('pressed'); }
+    raf = requestAnimationFrame(animate);
+  }
+  function resetRing(){ $('ring').style.strokeDashoffset = CIRC; }
+
+  function step(which, d){
+    if (which === 'hold'){
+      hold = Math.min(600, Math.max(0.5, +(hold+d).toFixed(1)));
+      $('holdVal').textContent = hold.toFixed(1); bridge && bridge.setHold(hold);
+    } else {
+      pause = Math.min(600, Math.max(0, +(pause+d).toFixed(1)));
+      $('pauseVal').textContent = pause.toFixed(1); bridge && bridge.setPause(pause);
+    }
+  }
+
+  $('btnStart').onclick = () => bridge && bridge.start();
+  $('btnStop').onclick  = () => bridge && bridge.stop();
+  $('btnClose').onclick = () => bridge && bridge.quitApp();
+  $('keycap').onclick = () => { if (running) return;
+    $('keycap').classList.add('listen'); $('keycap').textContent='нажми…'; bridge && bridge.listenBind('key'); };
+  $('bindStart').onclick = () => { $('bindStart').classList.add('listen');
+    $('bindStart').innerHTML='<span>нажми клавишу…</span>'; bridge && bridge.listenBind('start'); };
+  $('bindStop').onclick = () => { $('bindStop').classList.add('listen');
+    $('bindStop').innerHTML='<span>нажми клавишу…</span>'; bridge && bridge.listenBind('stop'); };
+  $('drag').addEventListener('mousedown', e => { if (e.target.closest('#btnClose')) return; bridge && bridge.startMove(); });
+
+  $('notifyToggle').onclick = () => {
+    notify = !notify;
+    $('notifySwitch').classList.toggle('on', notify);
+    $('notifyToggle').classList.toggle('on', notify);
+    $('notifyIcon').querySelector('svg').innerHTML = notify ? BELL_ON : BELL_OFF;
+    bridge && bridge.setNotify(notify);
+  };
+</script>
+</body>
+</html>
